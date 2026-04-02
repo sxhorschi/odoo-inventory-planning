@@ -1,0 +1,11 @@
+services:
+  inventory-overview:
+    build: .
+    container_name: inventory-overview
+    restart: unless-stopped
+    ports:
+      - "5002:5002"
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data

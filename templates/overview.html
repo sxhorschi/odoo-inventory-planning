@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inventory Overview — TYTAN</title>
+  <link rel="icon" type="image/png" href="https://media.licdn.com/dms/image/v2/D4D0BAQG-JwrrZfimtA/company-logo_200_200/B4DZjx6cYuIcAM-/0/1756405286827/tytan_technologies_logo?e=2147483647&v=beta&t=Ybdas6l-opL10njGQ2ab8uNothDbhInH2f9JjPUi5GQ">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    :root {
+      --bg: #d2d5c3;
+      --surface: #ffffff;
+      --surface2: #f8fafc;
+      --surface3: #f1f5f9;
+      --border: #e2e8f0;
+      --border-light: #cbd5e1;
+      --text: #1a1a1a;
+      --text-dim: #333333;
+      --text-muted: #666666;
+      --accent: #fcff2a;
+      --accent-hover: #e0e300;
+      --accent-dim: #fefce8;
+      --accent-text: #000000;
+      --green: #16a34a;
+      --green-dim: #dcfce7;
+      --red: #dc2626;
+      --red-dim: #fee2e2;
+      --orange: #d97706;
+      --orange-dim: #fef3c7;
+      --blue: #3b82f6;
+      --blue-dim: #dbeafe;
+      --radius: 8px;
+      --radius-lg: 12px;
+      --transition: 150ms ease;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      font-size: 14px;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background:
+        linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px),
+        linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px);
+      background-size: 60px 60px;
+    }
+
+    /* ── Layout ──────────────────────────────── */
+    .header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 32px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 20;
+    }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .header-left img { height: 32px; border-radius: 6px; }
+    .header-left h1 { font-size: 16px; font-weight: 600; }
+    .header-left h1 span { color: var(--text-muted); font-weight: 400; }
+    .container { max-width: 1060px; margin: 0 auto; padding: 28px 32px; position: relative; z-index: 1; }
+
+    /* ── Cards ────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px 24px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .card-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 16px;
+    }
+    .card-header h2 { font-size: 15px; font-weight: 600; }
+
+    /* ── Buttons ──────────────────────────────── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 16px; border-radius: 6px;
+      font-size: 13px; font-weight: 500;
+      border: 1px solid var(--border);
+      background: var(--surface); color: var(--text);
+      cursor: pointer; transition: all var(--transition);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+      font-family: inherit;
+    }
+    .btn:hover { background: var(--surface2); border-color: var(--border-light); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); font-weight: 600; }
+    .btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+    .btn-sm { padding: 5px 12px; font-size: 12px; }
+    .btn-logout { background: none; border: 1px solid var(--border); color: var(--text-muted); font-size: 12px; padding: 5px 12px; }
+    .btn-logout:hover { color: var(--red); border-color: var(--red); }
+
+    /* ── Form ─────────────────────────────────── */
+    .input-row { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+    .field { display: flex; flex-direction: column; gap: 5px; }
+    .field.grow { flex: 1; min-width: 240px; }
+    .field label {
+      font-size: 11px; font-weight: 500; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .field input, .field select {
+      padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px;
+      font-size: 14px; font-family: inherit; color: var(--text);
+      background: var(--surface); outline: none;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    .field input:focus, .field select:focus {
+      border-color: var(--accent); box-shadow: 0 0 0 3px rgba(252,255,42,0.2);
+    }
+    .field input[type="number"] { width: 100px; }
+
+    /* ── Assembly search/select ───────────────── */
+    .assembly-select-wrap { position: relative; width: 100%; }
+    #assemblySearch { width: 100%; }
+    .dropdown {
+      display: none; position: absolute; top: 100%; left: 0; right: 0;
+      background: var(--surface); border: 1px solid var(--border); border-top: none;
+      border-radius: 0 0 6px 6px; max-height: 260px; overflow-y: auto;
+      z-index: 30; box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    }
+    .dropdown.open { display: block; }
+    .dropdown-item {
+      padding: 8px 12px; cursor: pointer; font-size: 13px;
+      display: flex; gap: 8px; align-items: center;
+      transition: background var(--transition);
+    }
+    .dropdown-item:hover, .dropdown-item.active { background: var(--accent-dim); }
+    .dropdown-item .code {
+      font-weight: 600; color: var(--text);
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', 'JetBrains Mono', monospace;
+      font-size: 12px; white-space: nowrap;
+    }
+    .dropdown-item .name { color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .dropdown-empty { padding: 12px; text-align: center; color: var(--text-muted); font-size: 13px; }
+
+    /* ── Summary table ────────────────────────── */
+    .summary-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    }
+    .sg-col {
+      border-radius: var(--radius); padding: 16px 20px;
+    }
+    .sg-col.purchase { background: #fef2f2; border: 1px solid #fecaca; }
+    .sg-col.non-purchase { background: #fffbeb; border: 1px solid #fde68a; }
+    .sg-col-title {
+      font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+    .sg-col.purchase .sg-col-title { color: var(--red); }
+    .sg-col.non-purchase .sg-col-title { color: var(--orange); }
+    .sg-row { display: flex; justify-content: space-between; align-items: baseline; padding: 4px 0; }
+    .sg-row + .sg-row { border-top: 1px solid rgba(0,0,0,0.06); padding-top: 8px; margin-top: 4px; }
+    .sg-row-label { font-size: 12px; color: var(--text-muted); }
+    .sg-row-val {
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', 'JetBrains Mono', monospace;
+      font-size: 22px; font-weight: 700;
+    }
+    .sg-row-val.green { color: var(--green); }
+    .sg-row-val.red { color: var(--red); }
+    .sg-row-val.orange { color: var(--orange); }
+
+    /* ── Filter bar ──────────────────────────── */
+    .filter-bar {
+      display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .filter-bar .search-input {
+      padding: 6px 10px 6px 30px; border: 1px solid var(--border); border-radius: 6px;
+      font-size: 13px; font-family: inherit; color: var(--text); background: var(--surface);
+      outline: none; width: 220px; transition: border-color var(--transition), box-shadow var(--transition);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: 8px center;
+    }
+    .filter-bar .search-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(252,255,42,0.2); }
+    .filter-pill {
+      padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 500;
+      border: 1px solid var(--border); background: var(--surface); color: var(--text-dim);
+      cursor: pointer; transition: all var(--transition); font-family: inherit;
+    }
+    .filter-pill:hover { border-color: var(--border-light); background: var(--surface2); }
+    .filter-pill.active { background: var(--accent); border-color: var(--accent); color: var(--accent-text); font-weight: 600; }
+    .filter-pill.active-red { background: var(--red-dim); border-color: var(--red); color: var(--red); font-weight: 600; }
+    .filter-pill.active-green { background: var(--green-dim); border-color: var(--green); color: var(--green); font-weight: 600; }
+    .filter-sep { width: 1px; height: 20px; background: var(--border); margin: 0 4px; }
+
+    /* ── Tabs ─────────────────────────────────── */
+    .view-tabs { display: flex; gap: 0; margin-bottom: 16px; border-bottom: 2px solid var(--border); }
+    .view-tab {
+      padding: 8px 20px; font-size: 13px; font-weight: 500; color: var(--text-muted);
+      cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px;
+      transition: all var(--transition); background: none; border-top: none; border-left: none; border-right: none;
+      font-family: inherit;
+    }
+    .view-tab:hover { color: var(--text); }
+    .view-tab.active { color: var(--text); border-bottom-color: var(--accent); font-weight: 600; }
+
+    /* ── BOM Tree ─────────────────────────────── */
+    .bom-tree { font-size: 13px; }
+    .bom-node { border-bottom: 1px solid var(--border); }
+    .bom-node:last-child { border-bottom: none; }
+    .bom-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 12px; min-height: 38px;
+      transition: background var(--transition);
+    }
+    .bom-row:hover { background: var(--surface2); }
+    .bom-row.row-purchase-short { background: var(--red-dim); }
+    .bom-row.row-purchase-short:hover { background: #fdd; }
+    .bom-row.row-sale-short { background: var(--orange-dim); }
+    .bom-row.row-sale-short:hover { background: #fef0d0; }
+    .bom-toggle {
+      width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; border-radius: 4px; flex-shrink: 0; color: var(--text-muted);
+      transition: all var(--transition);
+    }
+    .bom-toggle:hover { background: var(--surface3); color: var(--text); }
+    .bom-toggle svg { width: 14px; height: 14px; transition: transform var(--transition); }
+    .bom-toggle.open svg { transform: rotate(90deg); }
+    .bom-toggle-spacer { width: 20px; flex-shrink: 0; }
+    .bom-indent { width: 20px; flex-shrink: 0; }
+    .bom-code {
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', 'JetBrains Mono', monospace;
+      font-size: 12px; font-weight: 600; white-space: nowrap; min-width: 140px;
+    }
+    a.bom-code { color: inherit; text-decoration: none; }
+    a.bom-code:hover { text-decoration: underline; color: var(--blue); }
+    .bom-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-dim); }
+    .bom-qty {
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', 'JetBrains Mono', monospace;
+      font-size: 12px; text-align: right; min-width: 55px; white-space: nowrap;
+    }
+    .bom-qty.short-purchase { color: var(--red); font-weight: 600; }
+    .bom-qty.short-sale { color: var(--orange); font-weight: 600; }
+    .bom-children { display: none; }
+    .bom-children.open { display: block; }
+
+    /* ── Badges ───────────────────────────────── */
+    .badge {
+      display: inline-block; padding: 2px 8px; border-radius: 4px;
+      font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px;
+      white-space: nowrap;
+    }
+    .badge-ok { background: var(--green-dim); color: var(--green); }
+    .badge-short { background: var(--red-dim); color: var(--red); }
+    .type-flag {
+      font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px;
+      padding: 1px 5px; border-radius: 3px; white-space: nowrap;
+    }
+    .type-flag.buy { background: var(--blue-dim); color: var(--blue); }
+    .type-flag.sale { background: var(--orange-dim); color: var(--orange); }
+
+    /* ── Toggle switch ───────────────────────── */
+    .toggle-wrap {
+      display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-dim);
+      cursor: pointer; user-select: none;
+    }
+    .toggle-switch {
+      width: 32px; height: 18px; border-radius: 9px; background: var(--border);
+      position: relative; transition: background var(--transition);
+    }
+    .toggle-switch::after {
+      content: ''; position: absolute; top: 2px; left: 2px;
+      width: 14px; height: 14px; border-radius: 50%; background: white;
+      transition: transform var(--transition);
+    }
+    .toggle-wrap.active .toggle-switch { background: var(--orange); }
+    .toggle-wrap.active .toggle-switch::after { transform: translateX(14px); }
+
+    /* ── Flat table ───────────────────────────── */
+    .table-wrap { overflow-x: auto; margin: 0 -24px; padding: 0 24px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead th {
+      text-align: left; font-size: 11px; font-weight: 500; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.5px; padding: 8px 12px;
+      border-bottom: 2px solid var(--border); white-space: nowrap;
+    }
+    tbody td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: var(--surface2); }
+    tbody tr.row-purchase-short { background: var(--red-dim); }
+    tbody tr.row-purchase-short:hover { background: #fdd; }
+    tbody tr.row-sale-short { background: var(--orange-dim); }
+    tbody tr.row-sale-short:hover { background: #fef0d0; }
+    td.mono { font-family: 'SF Mono', Monaco, 'Cascadia Code', 'JetBrains Mono', monospace; font-size: 12px; }
+    td.mono a { color: inherit; text-decoration: none; }
+    td.mono a:hover { text-decoration: underline; color: var(--blue); }
+    td.num {
+      text-align: right; font-variant-numeric: tabular-nums;
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', 'JetBrains Mono', monospace; font-size: 12px;
+    }
+
+    /* ── Section divider in flat table ────────── */
+    .section-divider td {
+      padding: 12px 12px 6px; font-size: 11px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted);
+      border-bottom: 2px solid var(--border); background: var(--surface2);
+    }
+
+    /* ── Spinner ──────────────────────────────── */
+    .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--text); border-radius: 50%; animation: spin 0.6s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── States ───────────────────────────────── */
+    .hidden { display: none !important; }
+    .empty-state { text-align: center; padding: 48px 24px; color: var(--text-muted); }
+    .empty-state svg { width: 48px; height: 48px; color: var(--border-light); margin-bottom: 12px; }
+    .empty-state h3 { font-size: 15px; font-weight: 600; color: var(--text-dim); margin-bottom: 4px; }
+    .empty-state p { font-size: 13px; }
+    .error-banner { background: var(--red-dim); color: var(--red); padding: 10px 16px; border-radius: var(--radius); font-size: 13px; margin-bottom: 16px; border: 1px solid #fecaca; }
+
+    /* ── BOM tree header row ──────────────────── */
+    .bom-header {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 12px; font-size: 11px; font-weight: 500;
+      color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;
+      border-bottom: 2px solid var(--border);
+    }
+
+    /* ── Responsive ───────────────────────────── */
+    @media (max-width: 640px) {
+      .container { padding: 16px; }
+      .card { padding: 16px; }
+      .input-row { flex-direction: column; }
+      .field input[type="number"] { width: 100%; }
+      .header { padding: 12px 16px; }
+      .summary-grid { grid-template-columns: 1fr; }
+      .sg-row-val { font-size: 18px; }
+      .filter-bar .search-input { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <img src="https://media.licdn.com/dms/image/v2/D4D0BAQG-JwrrZfimtA/company-logo_200_200/B4DZjx6cYuIcAM-/0/1756405286827/tytan_technologies_logo?e=2147483647&v=beta&t=Ybdas6l-opL10njGQ2ab8uNothDbhInH2f9JjPUi5GQ" alt="TYTAN">
+    <h1>Inventory Overview <span>· 01WH/Logistics</span></h1>
+  </div>
+  <div style="display:flex;align-items:center;gap:6px;">
+    <a href="settings" class="btn btn-logout">Settings</a>
+    <a href="logout" class="btn btn-logout">Logout</a>
+  </div>
+</div>
+
+<div class="container">
+
+  <div id="errorBanner" class="error-banner hidden"></div>
+
+  <!-- Input card -->
+  <div class="card">
+    <div class="card-header">
+      <h2>Assembly Check</h2>
+      <div id="loadingIndicator" class="hidden"><span class="spinner"></span></div>
+    </div>
+    <div class="input-row">
+      <div class="field grow">
+        <label for="assemblySearch">Assembly / Product</label>
+        <div class="assembly-select-wrap">
+          <input type="text" id="assemblySearch" placeholder="Search by part number or name..." autocomplete="off">
+          <div id="assemblyDropdown" class="dropdown"></div>
+        </div>
+      </div>
+      <div class="field">
+        <label for="qtyInput">Quantity</label>
+        <input type="number" id="qtyInput" value="1" min="1" step="1">
+      </div>
+      <div class="field">
+        <label>&nbsp;</label>
+        <button id="btnCheck" class="btn btn-primary" disabled>Check Stock</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results section -->
+  <div id="resultsSection" class="hidden">
+
+    <!-- Summary -->
+    <div class="card">
+      <div class="card-header">
+        <h2 id="resultTitle">Results</h2>
+        <span id="resultBadge" class="badge"></span>
+      </div>
+      <div class="summary-grid">
+        <div class="sg-col purchase">
+          <div class="sg-col-title">Purchase</div>
+          <div class="sg-row">
+            <span class="sg-row-label">Max producible</span>
+            <span class="sg-row-val" id="statMaxPurchase">-</span>
+          </div>
+          <div class="sg-row">
+            <span class="sg-row-label">Components short</span>
+            <span class="sg-row-val" id="statShortPurchase">-</span>
+          </div>
+        </div>
+        <div class="sg-col non-purchase">
+          <div class="sg-col-title">Non-Purchase</div>
+          <div class="sg-row">
+            <span class="sg-row-label">Max producible</span>
+            <span class="sg-row-val" id="statMaxOther">-</span>
+          </div>
+          <div class="sg-row">
+            <span class="sg-row-label">Components short</span>
+            <span class="sg-row-val" id="statShortOther">-</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- View tabs + filters -->
+    <div class="card" id="componentsCard">
+      <div class="view-tabs">
+        <button class="view-tab active" data-view="tree">BOM Structure</button>
+        <button class="view-tab" data-view="flat">Flat List</button>
+      </div>
+
+      <!-- Filter bar -->
+      <div class="filter-bar">
+        <input type="text" class="search-input" id="filterSearch" placeholder="Filter components...">
+        <div class="filter-sep"></div>
+        <button class="filter-pill active" data-filter="status" data-value="all">All</button>
+        <button class="filter-pill" data-filter="status" data-value="short">Short</button>
+        <button class="filter-pill" data-filter="status" data-value="ok">OK</button>
+        <div class="filter-sep"></div>
+        <label id="togglePurchaseOnly" class="toggle-wrap active">
+          <div class="toggle-switch"></div>
+          <span>Purchase Only</span>
+        </label>
+      </div>
+
+      <!-- Tree view -->
+      <div id="viewTree">
+        <div class="bom-header">
+          <div style="width:20px"></div>
+          <div style="min-width:140px">Part Number</div>
+          <div style="flex:1">Name</div>
+          <div style="min-width:55px;text-align:right">Needed</div>
+          <div style="min-width:55px;text-align:right">Avail.</div>
+          <div style="min-width:55px;text-align:right">Short</div>
+        </div>
+        <div id="bomTreeBody" class="bom-tree"></div>
+      </div>
+
+      <!-- Flat view -->
+      <div id="viewFlat" class="hidden">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Part Number</th>
+                <th>Name</th>
+                <th style="text-align:right">Needed</th>
+                <th style="text-align:right">Available</th>
+                <th style="text-align:right">Short</th>
+              </tr>
+            </thead>
+            <tbody id="flatBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Empty state -->
+  <div id="emptyState" class="card">
+    <div class="empty-state">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+      </svg>
+      <h3>Select an Assembly</h3>
+      <p>Choose a product above and enter the desired quantity to check stock availability.</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  const ODOO_URL = {{ odoo_url | tojson }};
+
+  // ── State ─────────────────────────────────────
+  let assemblies = [];
+  let selectedAssembly = null;
+  let dropdownIndex = -1;
+  let lastResult = null;
+  let activeView = 'tree';
+  let filterStatus = 'all';
+  let filterSearch = '';
+  let purchaseOnly = true;
+
+  // ── DOM refs ──────────────────────────────────
+  const searchInput    = document.getElementById('assemblySearch');
+  const dropdown       = document.getElementById('assemblyDropdown');
+  const qtyInput       = document.getElementById('qtyInput');
+  const btnCheck       = document.getElementById('btnCheck');
+  const resultsSection = document.getElementById('resultsSection');
+  const emptyState     = document.getElementById('emptyState');
+  const errorBanner    = document.getElementById('errorBanner');
+  const loading        = document.getElementById('loadingIndicator');
+
+  // ── API helpers ───────────────────────────────
+  function api(method, url, body) {
+    const opts = {
+      method,
+      headers: { 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/json' },
+    };
+    if (body) opts.body = JSON.stringify(body);
+    return fetch(url, opts).then(r => {
+      if (r.status === 401) { window.location.href = 'login'; throw new Error('Auth required'); }
+      return r.json().then(data => {
+        if (!r.ok) throw new Error(data.error || 'Request failed');
+        return data;
+      });
+    });
+  }
+
+  function showError(msg) {
+    errorBanner.textContent = msg;
+    errorBanner.classList.remove('hidden');
+    setTimeout(() => errorBanner.classList.add('hidden'), 8000);
+  }
+
+  function setLoading(on) {
+    loading.classList.toggle('hidden', !on);
+    btnCheck.disabled = on || !selectedAssembly;
+  }
+
+  // ── Load assemblies ───────────────────────────
+  api('GET', 'api/assemblies').then(data => {
+    assemblies = data.assemblies || [];
+  }).catch(e => showError('Failed to load assemblies: ' + e.message));
+
+  // ── Assembly search & dropdown ────────────────
+  function renderDropdown(items) {
+    if (!items.length) {
+      dropdown.innerHTML = '<div class="dropdown-empty">No assemblies found</div>';
+      dropdown.classList.add('open');
+      return;
+    }
+    dropdown.innerHTML = items.map((a, i) =>
+      `<div class="dropdown-item${i === dropdownIndex ? ' active' : ''}" data-index="${i}" data-id="${a.id}">
+        <span class="code">${esc(a.default_code || '\u2014')}</span>
+        <span class="name">${esc(a.name)}</span>
+      </div>`
+    ).join('');
+    dropdown.classList.add('open');
+  }
+
+  function filterAssemblies(query) {
+    if (!query) return assemblies.slice(0, 50);
+    const q = query.toLowerCase();
+    return assemblies.filter(a =>
+      (a.default_code || '').toLowerCase().includes(q) ||
+      (a.name || '').toLowerCase().includes(q)
+    ).slice(0, 50);
+  }
+
+  function selectAssembly(a) {
+    selectedAssembly = a;
+    searchInput.value = `${a.default_code || '\u2014'}  \u2014  ${a.name}`;
+    dropdown.classList.remove('open');
+    dropdownIndex = -1;
+    btnCheck.disabled = false;
+  }
+
+  searchInput.addEventListener('focus', () => {
+    const items = filterAssemblies(searchInput.value.includes('\u2014') ? '' : searchInput.value);
+    dropdownIndex = -1;
+    renderDropdown(items);
+  });
+  searchInput.addEventListener('input', () => {
+    selectedAssembly = null;
+    btnCheck.disabled = true;
+    dropdownIndex = -1;
+    renderDropdown(filterAssemblies(searchInput.value));
+  });
+  searchInput.addEventListener('keydown', (e) => {
+    const items = dropdown.querySelectorAll('.dropdown-item');
+    if (!items.length) return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      dropdownIndex = Math.min(dropdownIndex + 1, items.length - 1);
+      items.forEach((el, i) => el.classList.toggle('active', i === dropdownIndex));
+      items[dropdownIndex]?.scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      dropdownIndex = Math.max(dropdownIndex - 1, 0);
+      items.forEach((el, i) => el.classList.toggle('active', i === dropdownIndex));
+      items[dropdownIndex]?.scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (dropdownIndex >= 0 && dropdownIndex < items.length) {
+        const id = parseInt(items[dropdownIndex].dataset.id);
+        const a = assemblies.find(x => x.id === id);
+        if (a) selectAssembly(a);
+      }
+    } else if (e.key === 'Escape') { dropdown.classList.remove('open'); }
+  });
+  dropdown.addEventListener('click', (e) => {
+    const item = e.target.closest('.dropdown-item');
+    if (!item) return;
+    const a = assemblies.find(x => x.id === parseInt(item.dataset.id));
+    if (a) selectAssembly(a);
+  });
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.assembly-select-wrap')) dropdown.classList.remove('open');
+  });
+
+  // ── Check Stock ───────────────────────────────
+  btnCheck.addEventListener('click', () => {
+    if (!selectedAssembly) return;
+    const qty = parseFloat(qtyInput.value) || 1;
+    setLoading(true);
+    api('POST', 'api/check', { template_id: selectedAssembly.id, qty })
+      .then(data => { lastResult = data; renderResults(); })
+      .catch(e => showError('Check failed: ' + e.message))
+      .finally(() => setLoading(false));
+  });
+  qtyInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && selectedAssembly) btnCheck.click();
+  });
+
+  // ── View tabs ─────────────────────────────────
+  document.querySelectorAll('.view-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      activeView = tab.dataset.view;
+      document.getElementById('viewTree').classList.toggle('hidden', activeView !== 'tree');
+      document.getElementById('viewFlat').classList.toggle('hidden', activeView !== 'flat');
+      if (lastResult) renderView();
+    });
+  });
+
+  // ── Filter pills ──────────────────────────────
+  document.querySelectorAll('.filter-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      const group = pill.dataset.filter;
+      const value = pill.dataset.value;
+      document.querySelectorAll(`.filter-pill[data-filter="${group}"]`).forEach(p => {
+        p.classList.remove('active', 'active-red', 'active-green');
+      });
+      if (value === 'short') pill.classList.add('active-red');
+      else if (value === 'ok') pill.classList.add('active-green');
+      else pill.classList.add('active');
+
+      if (group === 'status') filterStatus = value;
+      if (lastResult) renderView();
+    });
+  });
+
+  // ── Purchase only toggle ───────────────────────
+  document.getElementById('togglePurchaseOnly').addEventListener('click', () => {
+    purchaseOnly = !purchaseOnly;
+    document.getElementById('togglePurchaseOnly').classList.toggle('active', purchaseOnly);
+    if (lastResult) renderView();
+  });
+
+  // ── Search filter ─────────────────────────────
+  document.getElementById('filterSearch').addEventListener('input', (e) => {
+    filterSearch = e.target.value.toLowerCase();
+    if (lastResult) renderView();
+  });
+
+  // ── Render results ────────────────────────────
+  function renderResults() {
+    const data = lastResult;
+    emptyState.classList.add('hidden');
+    resultsSection.classList.remove('hidden');
+
+    const asmName = data.assembly?.default_code || data.assembly?.name || 'Assembly';
+    document.getElementById('resultTitle').textContent = asmName;
+
+    const badge = document.getElementById('resultBadge');
+    if (data.all_available) {
+      badge.className = 'badge badge-ok'; badge.textContent = 'All Available';
+    } else {
+      badge.className = 'badge badge-short'; badge.textContent = `${data.short_count} Short`;
+    }
+
+    // Calculate split max from flat components
+    const comps = data.flat_components || [];
+    const reqQty = data.requested_qty || 1;
+    let maxPurchase = Infinity;
+    let maxOther = Infinity;
+    for (const c of comps) {
+      const perUnit = c.qty_needed / reqQty;
+      if (perUnit <= 0) continue;
+      const possible = Math.floor(c.qty_available / perUnit);
+      if (c.purchase_ok) maxPurchase = Math.min(maxPurchase, possible);
+      else maxOther = Math.min(maxOther, possible);
+    }
+    if (maxPurchase === Infinity) maxPurchase = 0;
+    if (maxOther === Infinity) maxOther = 0;
+
+    const mpEl = document.getElementById('statMaxPurchase');
+    mpEl.textContent = maxPurchase;
+    mpEl.className = 'stat-value ' + (maxPurchase >= reqQty ? 'green' : 'red');
+
+    const moEl = document.getElementById('statMaxOther');
+    moEl.textContent = maxOther;
+    moEl.className = 'stat-value ' + (maxOther >= reqQty ? 'green' : 'orange');
+
+    const purchaseShort = data.purchase_short_count || 0;
+    const otherShort = (data.short_count || 0) - purchaseShort;
+
+    const spEl = document.getElementById('statShortPurchase');
+    spEl.textContent = purchaseShort;
+    spEl.className = 'stat-value ' + (purchaseShort ? 'red' : 'green');
+
+    const soEl = document.getElementById('statShortOther');
+    soEl.textContent = otherShort;
+    soEl.className = 'stat-value ' + (otherShort ? 'orange' : 'green');
+
+    renderView();
+  }
+
+  function renderView() {
+    if (activeView === 'tree') renderTree();
+    else renderFlat();
+  }
+
+  // ── Filter matching (two-phase for tree) ──────
+  function nodePassesFilter(node) {
+    // In purchaseOnly mode, hide non-purchase leaf items (but always show assemblies as structural)
+    if (purchaseOnly && !node.is_assembly && !node.purchase_ok) return false;
+    if (filterStatus === 'short' && node.status !== 'short') return false;
+    if (filterStatus === 'ok' && node.status !== 'ok') return false;
+    if (filterSearch) {
+      return (node.default_code || '').toLowerCase().includes(filterSearch) ||
+             (node.product_name || '').toLowerCase().includes(filterSearch);
+    }
+    return true;
+  }
+
+  // Count short children recursively for sub-assembly summary
+  function countShortChildren(node) {
+    let purchaseShort = 0;
+    let otherShort = 0;
+    if (!node.children) return { purchaseShort, otherShort };
+    for (const child of node.children) {
+      if (child.is_assembly && child.children) {
+        const sub = countShortChildren(child);
+        purchaseShort += sub.purchaseShort;
+        otherShort += sub.otherShort;
+      } else if (child.status === 'short') {
+        if (child.purchase_ok) purchaseShort++;
+        else if (!purchaseOnly) otherShort++;
+      }
+    }
+    return { purchaseShort, otherShort };
+  }
+
+  function markFilterMatches(nodes) {
+    for (const node of nodes) {
+      const selfMatch = nodePassesFilter(node);
+      let childMatch = false;
+      if (node.children && node.children.length) {
+        markFilterMatches(node.children);
+        childMatch = node.children.some(c => c._matches || c._childMatches);
+      }
+      node._matches = selfMatch;
+      node._childMatches = childMatch;
+    }
+  }
+
+  // ── Odoo link helper ──────────────────────────
+  function odooLink(templateId, code) {
+    const display = esc(code || '\u2014');
+    if (templateId && ODOO_URL) {
+      return `<a href="${esc(ODOO_URL)}/odoo/inventory/products/${templateId}" target="_blank" class="bom-code">${display}</a>`;
+    }
+    return `<span class="bom-code">${display}</span>`;
+  }
+
+  // ── BOM Tree rendering ────────────────────────
+  function renderTree() {
+    const container = document.getElementById('bomTreeBody');
+    const tree = lastResult?.bom_tree || [];
+    markFilterMatches(tree);
+    container.innerHTML = renderTreeNodes(tree, 0);
+    container.querySelectorAll('.bom-toggle').forEach(tog => {
+      tog.addEventListener('click', () => {
+        tog.classList.toggle('open');
+        const children = tog.closest('.bom-node').querySelector('.bom-children');
+        if (children) children.classList.toggle('open');
+      });
+    });
+  }
+
+  function renderTreeNodes(nodes, depth) {
+    const hasActiveFilter = filterStatus !== 'all' || filterSearch;
+    return nodes.filter(n => n._matches || n._childMatches).map(node => {
+      const isAsm = node.is_assembly && node.children && node.children.length > 0;
+      const isLeafShort = node.status === 'short' && !isAsm;
+      const asmCounts = isAsm ? countShortChildren(node) : null;
+      const asmHasShort = asmCounts && (asmCounts.purchaseShort > 0 || asmCounts.otherShort > 0);
+      const rowClass = isLeafShort ? (node.purchase_ok ? 'row-purchase-short' : 'row-sale-short')
+                     : (isAsm && asmHasShort) ? (asmCounts.purchaseShort > 0 ? 'row-purchase-short' : 'row-sale-short')
+                     : '';
+      const shortClass = isLeafShort ? (node.purchase_ok ? 'short-purchase' : 'short-sale') : '';
+      const indent = '<div class="bom-indent"></div>'.repeat(depth);
+      const autoOpen = hasActiveFilter && node._childMatches;
+
+      // Type flag
+      let typeFlag = '';
+      if (!isAsm) {
+        if (node.purchase_ok) typeFlag = '<span class="type-flag buy">Buy</span>';
+        else if (node.sale_ok) typeFlag = '<span class="type-flag sale">Sale</span>';
+      }
+
+      // Sub-assembly short summary
+      let shortSummary = '\u2014';
+      if (isAsm && asmCounts) {
+        const parts = [];
+        if (asmCounts.purchaseShort > 0) parts.push(`<span style="color:var(--red);font-weight:600">${asmCounts.purchaseShort}</span>`);
+        if (asmCounts.otherShort > 0) parts.push(`<span style="color:var(--orange);font-weight:600">${asmCounts.otherShort}</span>`);
+        shortSummary = parts.length > 0 ? parts.join(' / ') : '\u2014';
+      }
+
+      let toggle = '<div class="bom-toggle-spacer"></div>';
+      if (isAsm) {
+        toggle = `<div class="bom-toggle${autoOpen ? ' open' : ''}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>`;
+      }
+
+      const childrenHtml = isAsm ? `<div class="bom-children${autoOpen ? ' open' : ''}">${renderTreeNodes(node.children, depth + 1)}</div>` : '';
+
+      return `<div class="bom-node">
+        <div class="bom-row ${rowClass}">
+          ${indent}${toggle}
+          ${odooLink(node.template_id, node.default_code)}
+          <div class="bom-name">${typeFlag} ${esc(cleanName(node.product_name))}</div>
+          <div class="bom-qty">${fmt(node.qty_needed)}</div>
+          <div class="bom-qty">${isAsm ? '\u2014' : fmt(node.qty_available)}</div>
+          <div class="bom-qty ${shortClass}">${isAsm ? shortSummary : (isLeafShort ? fmt(node.qty_short) : '\u2014')}</div>
+        </div>
+        ${childrenHtml}
+      </div>`;
+    }).join('');
+  }
+
+  // ── Flat table rendering ──────────────────────
+  function renderFlat() {
+    const tbody = document.getElementById('flatBody');
+    const components = (lastResult?.flat_components || []).filter(flatMatchesFilter);
+
+    const purchase = components.filter(c => c.purchase_ok);
+    const sale = components.filter(c => c.sale_ok && !c.purchase_ok);
+
+    let html = '';
+    if (purchase.length > 0) {
+      html += `<tr class="section-divider"><td colspan="5">Purchase Items (${purchase.length})</td></tr>`;
+      html += purchase.map(renderFlatRow).join('');
+    }
+    if (sale.length > 0) {
+      html += `<tr class="section-divider"><td colspan="5">Sale Items (${sale.length})</td></tr>`;
+      html += sale.map(renderFlatRow).join('');
+    }
+    if (!purchase.length && !sale.length) {
+      html = `<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:24px">No components match filters</td></tr>`;
+    }
+    tbody.innerHTML = html;
+  }
+
+  function renderFlatRow(c) {
+    const isShort = c.status === 'short';
+    const rowClass = isShort ? (c.purchase_ok ? 'row-purchase-short' : 'row-sale-short') : '';
+    const shortColor = isShort ? (c.purchase_ok ? 'color:var(--red);font-weight:600' : 'color:var(--orange);font-weight:600') : '';
+    let typeFlag = '';
+    if (c.purchase_ok) typeFlag = '<span class="type-flag buy">Buy</span> ';
+    else if (c.sale_ok) typeFlag = '<span class="type-flag sale">Sale</span> ';
+    return `<tr class="${rowClass}">
+      <td class="mono">${c.template_id && ODOO_URL ? `<a href="${esc(ODOO_URL)}/odoo/inventory/products/${c.template_id}" target="_blank">${esc(c.default_code || '\u2014')}</a>` : esc(c.default_code || '\u2014')}</td>
+      <td>${typeFlag}${esc(cleanName(c.product_name))}</td>
+      <td class="num">${fmt(c.qty_needed)}</td>
+      <td class="num">${fmt(c.qty_available)}</td>
+      <td class="num" style="${shortColor}">${isShort ? fmt(c.qty_short) : '\u2014'}</td>
+    </tr>`;
+  }
+
+  function flatMatchesFilter(c) {
+    if (purchaseOnly && !c.purchase_ok) return false;
+    if (filterStatus === 'short' && c.status !== 'short') return false;
+    if (filterStatus === 'ok' && c.status !== 'ok') return false;
+    if (filterSearch) {
+      return (c.default_code || '').toLowerCase().includes(filterSearch) ||
+             (c.product_name || '').toLowerCase().includes(filterSearch);
+    }
+    return true;
+  }
+
+  // ── Utilities ─────────────────────────────────
+  function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+  function fmt(n) { if (n == null) return '\u2014'; const num = parseFloat(n); return Number.isInteger(num) ? num.toString() : num.toFixed(1); }
+  function cleanName(name) {
+    return (name || '').replace(/^\[[^\]]*\]\s*/, '');
+  }
+
+})();
+</script>
+</body>
+</html>

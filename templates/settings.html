@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings — Inventory Overview</title>
+  <link rel="icon" type="image/png" href="https://media.licdn.com/dms/image/v2/D4D0BAQG-JwrrZfimtA/company-logo_200_200/B4DZjx6cYuIcAM-/0/1756405286827/tytan_technologies_logo?e=2147483647&v=beta&t=Ybdas6l-opL10njGQ2ab8uNothDbhInH2f9JjPUi5GQ">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    :root {
+      --bg: #d2d5c3;
+      --surface: #ffffff;
+      --surface2: #f8fafc;
+      --border: #e2e8f0;
+      --border-light: #cbd5e1;
+      --text: #1a1a1a;
+      --text-dim: #333333;
+      --text-muted: #666666;
+      --accent: #fcff2a;
+      --accent-hover: #e0e300;
+      --accent-text: #000000;
+      --green: #16a34a;
+      --green-dim: #dcfce7;
+      --red: #dc2626;
+      --red-dim: #fee2e2;
+      --radius: 8px;
+      --radius-lg: 12px;
+      --transition: 150ms ease;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      font-size: 14px;
+      -webkit-font-smoothing: antialiased;
+    }
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background:
+        linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px),
+        linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px);
+      background-size: 60px 60px;
+    }
+    .header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 32px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 20;
+    }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .header-left img { height: 32px; border-radius: 6px; }
+    .header-left h1 { font-size: 16px; font-weight: 600; }
+    .header-left h1 span { color: var(--text-muted); font-weight: 400; }
+    .header-right { display: flex; align-items: center; gap: 10px; }
+    .container { max-width: 560px; margin: 0 auto; padding: 28px 32px; position: relative; z-index: 1; }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .card h2 { font-size: 15px; font-weight: 600; margin-bottom: 16px; }
+    .form-group { margin-bottom: 14px; }
+    .form-group label {
+      display: block; font-size: 11px; font-weight: 500; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;
+    }
+    .form-group input {
+      width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px;
+      font-size: 14px; font-family: inherit; color: var(--text); background: var(--surface);
+      outline: none; transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    .form-group input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(252,255,42,0.2); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 16px; border-radius: 6px;
+      font-size: 13px; font-weight: 500;
+      border: 1px solid var(--border);
+      background: var(--surface); color: var(--text);
+      cursor: pointer; transition: all var(--transition);
+      font-family: inherit; text-decoration: none;
+    }
+    .btn:hover { background: var(--surface2); border-color: var(--border-light); }
+    .btn-primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); font-weight: 600; }
+    .btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-logout { background: none; border: 1px solid var(--border); color: var(--text-muted); font-size: 12px; padding: 5px 12px; }
+    .btn-logout:hover { color: var(--red); border-color: var(--red); }
+    .actions { display: flex; gap: 10px; align-items: center; margin-top: 20px; }
+    .status {
+      font-size: 13px; padding: 8px 12px; border-radius: 6px; margin-top: 12px; display: none;
+    }
+    .status.ok { display: block; background: var(--green-dim); color: var(--green); }
+    .status.err { display: block; background: var(--red-dim); color: var(--red); }
+    .back-link { font-size: 13px; color: var(--text-muted); text-decoration: none; }
+    .back-link:hover { color: var(--text); }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <img src="https://media.licdn.com/dms/image/v2/D4D0BAQG-JwrrZfimtA/company-logo_200_200/B4DZjx6cYuIcAM-/0/1756405286827/tytan_technologies_logo?e=2147483647&v=beta&t=Ybdas6l-opL10njGQ2ab8uNothDbhInH2f9JjPUi5GQ" alt="TYTAN">
+    <h1>Settings <span>· Inventory Overview</span></h1>
+  </div>
+  <div class="header-right">
+    <a href="." class="btn btn-logout">&larr; Back</a>
+    <a href="logout" class="btn btn-logout">Logout</a>
+  </div>
+</div>
+
+<div class="container">
+
+  <div class="card">
+    <h2>Odoo Connection</h2>
+    <div class="form-group">
+      <label for="odooUrl">URL</label>
+      <input type="url" id="odooUrl" placeholder="https://your-instance.odoo.com">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="odooDb">Database</label>
+        <input type="text" id="odooDb" placeholder="LIVE">
+      </div>
+      <div class="form-group">
+        <label for="odooUser">User</label>
+        <input type="text" id="odooUser" placeholder="admin@example.com">
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="odooPassword">Password / API Key</label>
+      <input type="password" id="odooPassword" placeholder="Leave empty to keep current">
+    </div>
+
+    <div class="actions">
+      <button id="btnSave" class="btn btn-primary">Save</button>
+      <button id="btnTest" class="btn">Test Connection</button>
+    </div>
+    <div id="status" class="status"></div>
+  </div>
+
+  <div class="card">
+    <h2>BOM Cache</h2>
+    <p id="cacheInfo" style="font-size:13px; color:var(--text-muted); margin-bottom:12px;">Loading...</p>
+    <button id="btnClearCache" class="btn">Clear Cache</button>
+    <div id="cacheStatus" class="status"></div>
+  </div>
+
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  const fields = {
+    url: document.getElementById('odooUrl'),
+    db: document.getElementById('odooDb'),
+    user: document.getElementById('odooUser'),
+    password: document.getElementById('odooPassword'),
+  };
+  const statusEl = document.getElementById('status');
+
+  function api(method, url, body) {
+    const opts = {
+      method,
+      headers: { 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/json' },
+    };
+    if (body) opts.body = JSON.stringify(body);
+    return fetch(url, opts).then(r => {
+      if (r.status === 401) { window.location.href = 'login'; throw new Error('Auth required'); }
+      return r.json().then(data => {
+        if (!r.ok) throw new Error(data.error || 'Request failed');
+        return data;
+      });
+    });
+  }
+
+  function showStatus(msg, ok) {
+    statusEl.textContent = msg;
+    statusEl.className = 'status ' + (ok ? 'ok' : 'err');
+  }
+
+  // Load current config
+  api('GET', 'api/config').then(data => {
+    const o = data.odoo || {};
+    fields.url.value = o.url || '';
+    fields.db.value = o.db || '';
+    fields.user.value = o.user || '';
+    fields.password.value = o.password || '';
+  }).catch(e => showStatus('Failed to load config: ' + e.message, false));
+
+  // Save
+  document.getElementById('btnSave').addEventListener('click', () => {
+    const payload = {
+      odoo: {
+        url: fields.url.value.trim(),
+        db: fields.db.value.trim(),
+        user: fields.user.value.trim(),
+        password: fields.password.value,
+      }
+    };
+    api('POST', 'api/config', payload)
+      .then(() => showStatus('Saved successfully.', true))
+      .catch(e => showStatus('Save failed: ' + e.message, false));
+  });
+
+  // Test connection
+  document.getElementById('btnTest').addEventListener('click', () => {
+    statusEl.className = 'status';
+    statusEl.style.display = 'block';
+    statusEl.textContent = 'Testing...';
+    statusEl.style.background = '#f1f5f9';
+    statusEl.style.color = '#666';
+    api('GET', 'api/health')
+      .then(data => showStatus('Connected — Odoo ' + (data.odoo_version || ''), true))
+      .catch(e => showStatus('Connection failed: ' + e.message, false));
+  });
+
+  // ── BOM Cache ─────────────────────────────────
+  const cacheInfo = document.getElementById('cacheInfo');
+  const cacheStatus = document.getElementById('cacheStatus');
+
+  function loadCacheInfo() {
+    api('GET', 'api/cache/info').then(data => {
+      if (data.bom_count === 0) {
+        cacheInfo.textContent = 'No cached BOMs.';
+      } else {
+        cacheInfo.textContent = `${data.bom_count} BOMs cached — expires in ${data.expires_in_hours}h`;
+      }
+    }).catch(() => { cacheInfo.textContent = 'Could not load cache info.'; });
+  }
+  loadCacheInfo();
+
+  document.getElementById('btnClearCache').addEventListener('click', () => {
+    api('POST', 'api/cache/invalidate').then(() => {
+      cacheStatus.textContent = 'Cache cleared.';
+      cacheStatus.className = 'status ok';
+      loadCacheInfo();
+    }).catch(e => {
+      cacheStatus.textContent = 'Failed: ' + e.message;
+      cacheStatus.className = 'status err';
+    });
+  });
+
+})();
+</script>
+</body>
+</html>
