@@ -1,10 +1,13 @@
 name: Deploy
 
 on:
-  push:
+  pull_request:
+    types: [closed]
+    branches: [main]
 
 jobs:
   deploy:
+    if: github.event.pull_request.merged == true
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
@@ -12,7 +15,5 @@ jobs:
       - name: Build and restart
         working-directory: /home/tytandev/inventory-overview
         run: |
-          git fetch origin
-          git checkout ${{ github.ref_name }}
-          git pull origin ${{ github.ref_name }}
+          git pull origin main
           docker compose up -d --build
