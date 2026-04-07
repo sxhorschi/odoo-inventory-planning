@@ -164,6 +164,30 @@ class OdooClient:
         return self.execute("stock.quant", "read",
                             [quant_ids, ["product_id", "quantity", "reserved_quantity"]])
 
+    # ── Purchase Orders ──────────────────────────────────────────────
+
+    def get_open_po_lines(self, product_ids: list[int]) -> list[dict]:
+        """Get open purchase order lines for given product variants.
+
+        Returns lines where the PO is confirmed (state=purchase) and
+        there is still qty to receive (qty_received < product_qty).
+        """
+        if not product_ids:
+            return []
+
+        domain = [
+            ["product_id", "in", product_ids],
+            ["state", "=", "purchase"],
+        ]
+        line_ids = self.execute("purchase.order.line", "search", [domain])
+        if not line_ids:
+            return []
+
+        return self.execute("purchase.order.line", "read", [
+            line_ids,
+            ["product_id", "product_qty", "qty_received", "date_planned", "order_id"]
+        ])
+
     # ── Health ───────────────────────────────────────────────────────
 
     def get_server_version(self) -> str:

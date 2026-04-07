@@ -258,11 +258,33 @@ class BomService:
             stock = q.get("quantity", 0.0) - q.get("reserved_quantity", 0.0)
             available_map[vid] = available_map.get(vid, 0.0) + stock
 
-        # Enrich tree with availability
-        self._enrich_tree_availability(bom_tree, available_map)
+        # Fetch open purchase order lines
+        po_map: dict[int, dict] = {}
+        try:
+            po_lines = self.odoo.get_open_po_lines(list(all_variant_ids))
+            for line in po_lines:
+                vid = line["product_id"][0] if isinstance(line["product_id"], (list, tuple)) else line["product_id"]
+                remaining = (line.get("product_qty", 0) or 0) - (line.get("qty_received", 0) or 0)
+                if remaining <= 0:
+                    continue
+                if vid not in po_map:
+                    po_map[vid] = {"qty_ordered": 0.0, "earliest_arrival": None}
+                po_map[vid]["qty_ordered"] += remaining
+                arrival = line.get("date_planned")
+                if arrival:
+                    # date_planned can be string or datetime
+                    arrival_str = str(arrival)[:10] if arrival else None
+                    if arrival_str:
+                        prev = po_map[vid]["earliest_arrival"]
+                        if prev is None or arrival_str < prev:
+                            po_map[vid]["earliest_arrival"] = arrival_str
+        except Exception as e:
+            logger.warning("Failed to fetch PO lines: %s", e)
+
+        # Enrich tree with availability + PO data
+        self._enrich_tree_availability(bom_tree, available_map, po_map)
 
         # Enrich flat components with availability + type info
-        # Get template info for flat components
         tmpl_ids = [c["template_id"] for c in flat_components if c.get("template_id")]
         tmpl_map = self.odoo.batch_get_product_template_info(tmpl_ids) if tmpl_ids else {}
 
@@ -280,6 +302,8 @@ class BomService:
             tmpl_info = tmpl_map.get(comp.get("template_id"), {})
             purchase_ok = tmpl_info.get("purchase_ok", True)
             sale_ok = tmpl_info.get("sale_ok", False)
+
+            po_data = po_map.get(vid, {})
 
             if short > 0:
                 short_count += 1
@@ -299,6 +323,8 @@ class BomService:
                 "status": status,
                 "purchase_ok": purchase_ok,
                 "sale_ok": sale_ok,
+                "qty_ordered": po_data.get("qty_ordered", 0),
+                "earliest_arrival": po_data.get("earliest_arrival"),
             })
 
         # Sort: purchase items first (short first within each group), then sale items
@@ -329,8 +355,9 @@ class BomService:
             if node.get("children"):
                 self._collect_variant_ids(node["children"], ids)
 
-    def _enrich_tree_availability(self, tree: list[dict], available_map: dict[int, float]) -> None:
-        """Add qty_available, qty_short, status to each tree node."""
+    def _enrich_tree_availability(self, tree: list[dict], available_map: dict[int, float],
+                                   po_map: dict[int, dict] | None = None) -> None:
+        """Add qty_available, qty_short, status, and PO data to each tree node."""
         for node in tree:
             vid = node["variant_id"]
             available = max(0.0, available_map.get(vid, 0.0))
@@ -340,8 +367,12 @@ class BomService:
             node["qty_short"] = short
             node["status"] = "ok" if short == 0 else "short"
 
+            po_data = (po_map or {}).get(vid, {})
+            node["qty_ordered"] = po_data.get("qty_ordered", 0)
+            node["earliest_arrival"] = po_data.get("earliest_arrival")
+
             if node.get("children"):
-                self._enrich_tree_availability(node["children"], available_map)
+                self._enrich_tree_availability(node["children"], available_map, po_map)
 
     # ── Max producible ───────────────────────────────────────────────
 

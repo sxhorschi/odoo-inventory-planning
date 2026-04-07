@@ -241,6 +241,8 @@
     }
     .bom-qty.short-purchase { color: var(--red); font-weight: 600; }
     .bom-qty.short-sale { color: var(--orange); font-weight: 600; }
+    .bom-qty.ordered { color: var(--blue); }
+    .bom-eta { font-size: 11px; text-align: right; min-width: 70px; white-space: nowrap; color: var(--text-muted); }
     .bom-children { display: none; }
     .bom-children.open { display: block; }
 
@@ -446,6 +448,8 @@
           <div style="min-width:55px;text-align:right">Needed</div>
           <div style="min-width:55px;text-align:right">Avail.</div>
           <div style="min-width:55px;text-align:right">Short</div>
+          <div style="min-width:55px;text-align:right">Ordered</div>
+          <div style="min-width:70px;text-align:right">ETA</div>
         </div>
         <div id="bomTreeBody" class="bom-tree"></div>
       </div>
@@ -461,6 +465,8 @@
                 <th style="text-align:right">Needed</th>
                 <th style="text-align:right">Available</th>
                 <th style="text-align:right">Short</th>
+                <th style="text-align:right">Ordered</th>
+                <th style="text-align:right">ETA</th>
               </tr>
             </thead>
             <tbody id="flatBody"></tbody>
@@ -845,6 +851,8 @@
           <div class="bom-qty">${fmt(node.qty_needed)}</div>
           <div class="bom-qty">${isAsm ? '\u2014' : fmt(node.qty_available)}</div>
           <div class="bom-qty ${shortClass}">${isAsm ? shortSummary : (isLeafShort ? fmt(node.qty_short) : '\u2014')}</div>
+          <div class="bom-qty ${node.qty_ordered ? 'ordered' : ''}">${node.qty_ordered ? fmt(node.qty_ordered) : '\u2014'}</div>
+          <div class="bom-eta">${node.earliest_arrival || '\u2014'}</div>
         </div>
         ${childrenHtml}
       </div>`;
@@ -861,15 +869,15 @@
 
     let html = '';
     if (purchase.length > 0) {
-      html += `<tr class="section-divider"><td colspan="5">Purchase Items (${purchase.length})</td></tr>`;
+      html += `<tr class="section-divider"><td colspan="7">Purchase Items (${purchase.length})</td></tr>`;
       html += purchase.map(renderFlatRow).join('');
     }
     if (sale.length > 0) {
-      html += `<tr class="section-divider"><td colspan="5">Sale Items (${sale.length})</td></tr>`;
+      html += `<tr class="section-divider"><td colspan="7">Sale Items (${sale.length})</td></tr>`;
       html += sale.map(renderFlatRow).join('');
     }
     if (!purchase.length && !sale.length) {
-      html = `<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:24px">No components match filters</td></tr>`;
+      html = `<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:24px">No components match filters</td></tr>`;
     }
     tbody.innerHTML = html;
   }
@@ -887,6 +895,8 @@
       <td class="num">${fmt(c.qty_needed)}</td>
       <td class="num">${fmt(c.qty_available)}</td>
       <td class="num" style="${shortColor}">${isShort ? fmt(c.qty_short) : '\u2014'}</td>
+      <td class="num" style="${c.qty_ordered ? 'color:var(--blue)' : ''}">${c.qty_ordered ? fmt(c.qty_ordered) : '\u2014'}</td>
+      <td class="num" style="font-size:12px;color:var(--text-muted)">${c.earliest_arrival || '\u2014'}</td>
     </tr>`;
   }
 
